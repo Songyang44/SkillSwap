@@ -118,16 +118,54 @@ class _HomePageState extends State<HomePage> {
                         //           ),
                         //         );
                         //       },
-                        onChatPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatPage(
-                                receiverId: post.user_id,
-                                receiverName: post.username,
+                        onChatPressed: () async {
+                          final supabase = Supabase.instance.client;
+                          final currentUserId = supabase.auth.currentUser!.id;
+                          final receiverId = post.user_id;
+                          final receiverName = post.username;
+
+                          try {
+                            final response = await supabase
+                                .rpc(
+                                  'get_or_create_conversation',
+                                  params: {
+                                    'user1': currentUserId,
+                                    'user2': receiverId,
+                                  },
+                                )
+                                .single();
+
+                            final conversationId = response['id'] as String?;
+
+                            if (conversationId == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Failed to get conversation ID',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatPage(
+                                  receiverId: receiverId,
+                                  receiverName: receiverName,
+                                  conversationId: conversationId,
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } catch (e) {
+                            print('❌ Error in get_or_create_conversation: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error starting chat: $e'),
+                              ),
+                            );
+                          }
                         },
                       ),
                     ),
