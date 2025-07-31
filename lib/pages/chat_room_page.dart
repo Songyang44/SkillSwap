@@ -4,11 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class ChatPage extends StatefulWidget {
   final String receiverId;
   final String receiverName;
+  final String conversationId;
 
   const ChatPage({
     super.key,
     required this.receiverId,
     required this.receiverName,
+    required this.conversationId,
   });
 
   @override
@@ -30,35 +32,24 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _loadMessages() async {
-    final userId = supabase.auth.currentUser!.id;
+    try {
+      final res = await supabase
+          .from('messages')
+          .select()
+          .eq('conversation_id', widget.conversationId)
+          .order('created_at', ascending: true);
 
-    final res = await supabase
-        .from('messages')
-        .select()
-        .or('sender_id.eq.$userId,receiver_id.eq.$userId')
-        .order('created_at');
+      setState(() {
+        messages = List<Map<String, dynamic>>.from(res);
+      });
 
-    setState(() {
-      messages = res
-          .where(
-            (msg) =>
-                (msg['sender_id'] == userId &&
-                    msg['receiver_id'] == widget.receiverId) ||
-                (msg['sender_id'] == widget.receiverId &&
-                    msg['receiver_id'] == userId),
-          )
-          .toList();
-    });
-
-    // 滚动到底部
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
+      _scrollToBottom();
+    } catch (e) {
+      print('❌ Load messages failed: $e');
+    }
   }
 
   void _subscribeToMessages() {
-    final userId = supabase.auth.currentUser!.id;
-
     supabase
         .channel('realtime:messages')
         .onPostgresChanges(
@@ -66,18 +57,16 @@ class _ChatPageState extends State<ChatPage> {
           schema: 'public',
           table: 'messages',
           filter: PostgresChangeFilter(
-            column: 'receiver_id',
+            column: 'conversation_id',
             type: PostgresChangeFilterType.eq,
-            value: userId,
+            value: widget.conversationId,
           ),
           callback: (payload) {
             final newMessage = payload.newRecord;
-            if (newMessage['sender_id'] == widget.receiverId) {
-              setState(() {
-                messages.add(newMessage);
-              });
-              _scrollToBottom();
-            }
+            setState(() {
+              messages.add(newMessage);
+            });
+            _scrollToBottom();
           },
         )
         .subscribe();
@@ -85,11 +74,13 @@ class _ChatPageState extends State<ChatPage> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent + 100,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent + 80,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -99,14 +90,18 @@ class _ChatPageState extends State<ChatPage> {
 
     final userId = supabase.auth.currentUser!.id;
 
-    await supabase.from('messages').insert({
-      'sender_id': userId,
-      'receiver_id': widget.receiverId,
-      'content': text,
-    });
+    try {
+      await supabase.from('messages').insert({
+        'conversation_id': widget.conversationId,
+        'sender_id': userId,
+        'receiver_id': widget.receiverId,
+        'content': text,
+      });
 
-    _messageController.clear();
-    await _loadMessages(); // 可选：手动刷新一次
+      _messageController.clear();
+    } catch (e) {
+      print('❌ Send message failed: $e');
+    }
   }
 
   @override

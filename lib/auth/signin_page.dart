@@ -33,10 +33,11 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.session != null) {
-       Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => ProfilePage()),
-        );
+      //  Navigator.pushReplacement(
+      //     context,
+      //     MaterialPageRoute(builder: (_) => ProfilePage()),
+      //   );
+      Navigator.pop(context);
       } else {
         setState(() {
           _errorText = '未知错误，登录失败';

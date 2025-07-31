@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/profile_page.dart';
 import 'pages/home_page.dart';
 import 'pages/create_post_page.dart';
+import 'pages/chat_list_page.dart';
 import 'app_state.dart';
 
 
@@ -42,69 +43,59 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 class _MyHomePageState extends State<MyHomePage> {
-  var selectedIndex = 0;
+  int selectedIndex = 0;
+
+  final List<Widget> pages = [
+    HomePage(),
+    ChatListPage(),
+    ProfilePage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    Widget page;
-    switch (selectedIndex) {
-      case 0:
-        page = HomePage();
-        break;
-      case 1:
-        page= ProfilePage();
-        break;
-      default:
-        throw UnimplementedError('no widget for $selectedIndex');
-    }
-
-return Scaffold(
-  body: Container(
-    color: Theme.of(context).colorScheme.primaryContainer,
-    child: page,
-  ),
-  bottomNavigationBar: BottomAppBar(
-    shape: const CircularNotchedRectangle(),
-    notchMargin: 6.0,
-    height: 60,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        IconButton(
-          icon: Icon(Icons.home,
-              color: selectedIndex == 0 ? Colors.blue : Colors.grey),
-          onPressed: () {
-            setState(() {
-              selectedIndex = 0;
-            });
-          },
+    return Scaffold(
+      body: pages[selectedIndex],
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => CreatePostScreen()),
+          );
+        },
+        backgroundColor: Colors.blueAccent,
+        child: const Icon(Icons.add),
+        tooltip: 'Add Post',
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 6,
+        height: 60,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            _buildTabItem(icon: Icons.home, index: 0),
+            const SizedBox(width: 40), // middle space for FAB
+            _buildTabItem(icon: Icons.chat_bubble_outline, index: 1),
+            _buildTabItem(icon: Icons.person, index: 2),
+          ],
         ),
-        IconButton(
-          icon: Icon(Icons.person,
-              color: selectedIndex == 1 ? Colors.blue : Colors.grey),
-          onPressed: () {
-            setState(() {
-              selectedIndex = 1;
-            });
-          },
-        ),
-      ],
-    ),
-  ),
-  floatingActionButton: FloatingActionButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => CreatePostScreen()),
-      );
-    },
-    child: Icon(Icons.add),
-    backgroundColor: Colors.blueAccent,
-    tooltip: 'Add Post',
-  ),
-  floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-);
+      ),
+    );
+  }
 
+  Widget _buildTabItem({required IconData icon, required int index}) {
+    final isSelected = selectedIndex == index;
+    return IconButton(
+      icon: Icon(icon, color: isSelected ? Colors.blue : Colors.grey),
+      onPressed: () => _onItemTapped(index),
+    );
   }
 }
 
