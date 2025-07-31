@@ -1,6 +1,7 @@
 import 'comment.dart';
 class Post {
   final String id;
+  final String user_id;
   final String avatarUrl;
   final String username;
   final String contentText;
@@ -14,6 +15,7 @@ class Post {
 
   Post({
     required this.id,
+    required this.user_id,
     required this.avatarUrl,
     required this.username,
     required this.contentText,
@@ -29,6 +31,7 @@ class Post {
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
       id: map['id'].toString(),
+      user_id:map['user_id'].toString(),
       avatarUrl: map['avatar_url'] ?? '',
       username: map['username'] ?? 'Anonymous',
       contentText: map['description'] ?? '',
@@ -47,6 +50,7 @@ class Post {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'user_id':user_id,
       'avatar_url': avatarUrl,
       'username': username,
       'description': contentText,
