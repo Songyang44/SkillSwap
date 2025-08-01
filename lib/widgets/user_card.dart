@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/comment.dart';
+import '../pages/user_profile_page.dart';
 
 class UserPostWidget extends StatefulWidget {
+  final String user_id;
   final String avatarUrl;
   final String username;
   final bool isVerified;
@@ -19,6 +21,7 @@ class UserPostWidget extends StatefulWidget {
 
   const UserPostWidget({
     super.key,
+    required this.user_id,
     required this.avatarUrl,
     required this.username,
     this.isVerified = false,
@@ -81,34 +84,56 @@ class _UserPostWidgetState extends State<UserPostWidget> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundImage: NetworkImage(widget.avatarUrl),
-                      backgroundColor: Colors.grey.shade300,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                UserProfilePage(userId: widget.user_id),
+                          ),
+                        );
+                      },
+                      child: CircleAvatar(
+                        radius: 24,
+                        backgroundImage: NetworkImage(widget.avatarUrl),
+                        backgroundColor: Colors.grey.shade300,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                widget.username,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      UserProfilePage(userId: widget.user_id),
                                 ),
-                              ),
-                              if (widget.isVerified) ...[
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.verified,
-                                  color: Colors.blue,
-                                  size: 18,
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                Text(
+                                  widget.username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
+                                if (widget.isVerified) ...[
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.verified,
+                                    color: Colors.blue,
+                                    size: 18,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
