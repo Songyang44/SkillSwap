@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat_room_page.dart';
 
 class ChatListPage extends StatefulWidget {
+  const ChatListPage({super.key});
   @override
   _ChatListPageState createState() => _ChatListPageState();
 }

@@ -13,6 +13,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
@@ -82,9 +83,13 @@ class _ProfilePageState extends State<ProfilePage> {
     // 请求权限
     final permission = await Permission.location.request();
     if (!permission.isGranted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location permission is required to obtain the location')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Location permission is required to obtain the location',
+          ),
+        ),
+      );
       return;
     }
 
@@ -111,9 +116,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
       await fetchUserInfo(); // 刷新 UI
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Location updated to $locationStr')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location updated to $locationStr')),
+      );
     } catch (e) {
       print('❌ Failed to obtain location: $e');
       ScaffoldMessenger.of(
@@ -192,6 +197,11 @@ class _ProfilePageState extends State<ProfilePage> {
           .eq('id', user.id);
 
       await fetchUserInfo();
+      await Supabase.instance.client
+          .from('posts')
+          .update({'avatar_url': publicUrl})
+          .eq('user_id', user.id);
+
       print(' Upload Path: $storagePath');
     } catch (e) {
       print('❌ Failed to upload avatar: $e');
@@ -211,16 +221,23 @@ class _ProfilePageState extends State<ProfilePage> {
         GestureDetector(
           onTap: _pickAndUploadAvatar,
           child: CircleAvatar(
-            radius: 40,
-            backgroundImage: userInfo?['avatar_url'] != null
-                ? NetworkImage(userInfo!['avatar_url'])
-                : null,
+            radius: 40, // 你可以调整到合适的大小，比如 40 对应直径80
             backgroundColor: Colors.grey.shade200,
-            child: userInfo?['avatar_url'] == null
-                ? Icon(Icons.person, size: 40, color: Colors.grey)
-                : null,
+            child: userInfo?['avatar_url'] != null
+                ? ClipOval(
+                    child: Image.network(
+                      userInfo!['avatar_url'],
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover, // 这里用 cover 更合适头像显示
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.person, size: 40),
+                    ),
+                  )
+                : const Icon(Icons.person, size: 40, color: Colors.grey),
           ),
         ),
+
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -252,7 +269,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Text(
               userInfo?['location']?.toString().isNotEmpty == true
                   ? userInfo!['location']
-                  : '未知',
+                  : 'Unknow',
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),

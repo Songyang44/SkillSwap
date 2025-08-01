@@ -7,6 +7,7 @@ import '../pages/chat_room_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -88,6 +89,7 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       child: UserPostWidget(
+                        user_id:post.user_id,
                         avatarUrl: post.avatarUrl,
                         username: post.username,
                         contentText: post.contentText,
@@ -101,72 +103,70 @@ class _HomePageState extends State<HomePage> {
                         onSubmitComment: (content) =>
                             appState.commentPost(post.id, content),
                         latestComment: post.latestComment,
-                        // onChatPressed: isSelf
-                        //     ? () {
-                        //         ScaffoldMessenger.of(context).showSnackBar(
-                        //           SnackBar(content: Text("You can't chat with yourself")),
-                        //         );
-                        //       }
-                        //     : () {
-                        //         Navigator.push(
-                        //           context,
-                        //           MaterialPageRoute(
-                        //             builder: (_) => ChatPage(
-                        //               receiverId: post.user_id,
-                        //               receiverName: post.username,
-                        //             ),
-                        //           ),
-                        //         );
-                        //       },
-                        onChatPressed: () async {
-                          final supabase = Supabase.instance.client;
-                          final currentUserId = supabase.auth.currentUser!.id;
-                          final receiverId = post.user_id;
-                          final receiverName = post.username;
 
-                          try {
-                            final response = await supabase
-                                .rpc(
-                                  'get_or_create_conversation',
-                                  params: {
-                                    'user1': currentUserId,
-                                    'user2': receiverId,
-                                  },
-                                )
-                                .single();
-
-                            final conversationId = response['id'] as String?;
-
-                            if (conversationId == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Failed to get conversation ID',
+                        onChatPressed: isSelf
+                            ? () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "You can't chat with yourself",
+                                    ),
                                   ),
-                                ),
-                              );
-                              return;
-                            }
+                                );
+                              }
+                            : () async {
+                                final supabase = Supabase.instance.client;
+                                final currentUserId =
+                                    supabase.auth.currentUser!.id;
+                                final receiverId = post.user_id;
+                                final receiverName = post.username;
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ChatPage(
-                                  receiverId: receiverId,
-                                  receiverName: receiverName,
-                                  conversationId: conversationId,
-                                ),
-                              ),
-                            );
-                          } catch (e) {
-                            print('❌ Error in get_or_create_conversation: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error starting chat: $e'),
-                              ),
-                            );
-                          }
-                        },
+                                try {
+                                  final response = await supabase
+                                      .rpc(
+                                        'get_or_create_conversation',
+                                        params: {
+                                          'user1': currentUserId,
+                                          'user2': receiverId,
+                                        },
+                                      )
+                                      .single();
+
+                                  final conversationId =
+                                      response['id'] as String?;
+
+                                  if (conversationId == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Failed to get conversation ID',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ChatPage(
+                                        receiverId: receiverId,
+                                        receiverName: receiverName,
+                                        conversationId: conversationId,
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  print(
+                                    '❌ Error in get_or_create_conversation: $e',
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error starting chat: $e'),
+                                    ),
+                                  );
+                                }
+                              },
                       ),
                     ),
                   );
